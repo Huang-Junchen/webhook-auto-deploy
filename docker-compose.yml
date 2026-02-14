@@ -3,18 +3,18 @@ version: '3.8'
 services:
   webhook:
     build: .
-    container_name: multi-webhook
+    container_name: webhook-auto-deploy
     ports:
       - "5000:5000"
     environment:
       - WEBHOOK_SECRET=your-strong-password-here  # 请修改为强密码
       - WEBHOOK_PORT=5000
-      - DOCKER_USE_SUDO=false  # 如果需要 sudo，改为 true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # 挂载 Docker socket
-      # 挂载各个项目的目录（根据实际情况修改）
-      - /volume1/docker/recipe:/volume1/docker/recipe:ro
-      - /volume1/docker/blog:/volume1/docker/blog:ro
+      - ./config.py:/app/config.py:ro  # 挂载配置文件
+      # 挂载各个项目的目录（根据实际情况取消注释）
+      # - /volume1/docker/recipe:/volume1/docker/recipe:ro
+      # - /volume1/docker/blog:/volume1/docker/blog:ro
     restart: unless-stopped
     networks:
       - webhook-net

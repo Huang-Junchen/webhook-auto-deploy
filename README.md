@@ -29,15 +29,25 @@ cd webhook-auto-deploy
 
 ### 2. 配置项目列表
 
-编辑 `webhook-server.py`，修改 `PROJECTS` 字典：
+编辑 `config.py` 文件（推荐）或 `webhook-server.py`（不推荐）：
+
+```bash
+# 复制示例配置
+cp config.example.py config.py
+
+# 编辑配置
+nano config.py
+```
+
+修改项目配置：
 
 ```python
 PROJECTS = {
     'recipe': {
-        'path': '/volume1/docker/recipe',
-        'compose_file': 'docker-compose.yml',
-        'branch': 'main',
-        'description': '食谱系统'
+        'path': '/volume1/docker/recipe',       # NAS 上的实际路径
+        'compose_file': 'docker-compose.yml',     # Docker Compose 文件名
+        'branch': 'main',                      # 监控的分支
+        'description': '食谱系统'                 # 项目描述
     },
     'blog': {
         'path': '/volume1/docker/blog',
@@ -45,16 +55,29 @@ PROJECTS = {
         'branch': 'main',
         'description': '博客系统'
     },
+    # 添加更多项目...
 }
 ```
 
-### 3. 启动服务
+### 3. 配置环境变量
+
+编辑 `docker-compose.yml`：
+
+```yaml
+environment:
+  - WEBHOOK_SECRET=your-strong-password-here  # 修改为强密码
+  - WEBHOOK_PORT=5000
+```
+
+生成强密码：
 
 ```bash
-# 修改配置
-nano docker-compose.yml
-# 修改 WEBHOOK_SECRET 为强密码
+openssl rand -hex 32
+```
 
+### 4. 启动服务
+
+```bash
 # 构建并启动
 docker-compose up -d --build
 

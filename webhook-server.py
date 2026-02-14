@@ -3,13 +3,14 @@
 通用 GitHub Webhook 服务器 - 支持多个项目自动部署
 
 配置说明：
-1. 在 PROJECTS 字典中添加各个项目的配置
-2. 每个项目指定：仓库路径、docker-compose 文件名（可选）、分支（可选）
-3. GitHub Webhook URL: http://your-server:5000/webhook/项目名
+1. 编辑 config.py 配置项目列表
+2. 每个项目指定：路径、compose 文件、分支
+3. GitHub Webhook URL: http://your-server:5000/webhook
+4. 服务器会自动根据 GitHub 仓库名匹配项目
 
-示例：
-- recipe 项目: http://your-server:5000/webhook/recipe
-- blog 项目: http://your-server:5000/webhook/blog
+环境变量：
+- WEBHOOK_SECRET: GitHub Webhook 密钥（必填）
+- LOG_LEVEL: 日志级别，默认 INFO
 """
 from flask import Flask, request, jsonify
 import subprocess
@@ -17,48 +18,38 @@ import os
 import hmac
 import hashlib
 import logging
+import sys
 from pathlib import Path
 
 app = Flask(__name__)
 
+# 导入配置
+try:
+    from config import PROJECTS, DOCKER_USE_SUDO, LOG_LEVEL
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.warning("未找到 config.py，使用空配置")
+    PROJECTS = {}
+    DOCKER_USE_SUDO = False
+    LOG_LEVEL = 'INFO'
+
 # 配置日志
+log_level = getattr(logging, LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format='[%(asctime)s] %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
 
 # 全局配置
-WEBHOOK_SECRET = os.environ.get('WEBHOOK_SECRET', 'your-super-secret-password-change-me')
+WEBHOOK_SECRET = os.environ.get('WEBHOOK_SECRET', '')
 GITHUB_WEBHOOK_SECRET = os.environ.get('GITHUB_WEBHOOK_SECRET', WEBHOOK_SECRET)
 
-# 项目配置
-# 格式：'项目名': {'path': '项目路径', 'compose_file': 'docker-compose文件', 'branch': '分支名'}
-PROJECTS = {
-    'recipe': {
-        'path': '/volume1/docker/recipe',
-        'compose_file': 'docker-compose.yml',
-        'branch': 'main',
-        'description': '食谱系统'
-    },
-    'blog': {
-        'path': '/volume1/docker/blog',
-        'compose_file': 'docker-compose.yml',
-        'branch': 'main',
-        'description': '博客系统'
-    },
-    # 添加更多项目...
-    # 'api': {
-    #     'path': '/volume1/docker/api',
-    #     'compose_file': 'docker-compose.prod.yml',
-    #     'branch': 'main',
-    #     'description': 'API 服务'
-    # },
-}
-
-# Docker 配置
-DOCKER_USE_SUDO = os.environ.get('DOCKER_USE_SUDO', 'false').lower() == 'true'
+if not WEBHOOK_SECRET:
+    logger.error("未设置 WEBHOOK_SECRET 环境变量！")
+    logger.error("请设置：export WEBHOOK_SECRET=your-secret-key")
+    sys.exit(1)
 
 
 def verify_signature(payload, signature):
@@ -147,7 +138,7 @@ def deploy_project(project_name):
         logger.info(f"[2/3] 停止 Docker 容器...")
         docker_cmd = ['docker-compose']
         if DOCKER_USE_SUDO:
-            docker_cmd.insert(0, 'sudo')
+            docker_cmd = ['sudo'] + docker_cmd
 
         success, output = run_command(
             docker_cmd + ['-f', compose_file, 'down'],
@@ -244,6 +235,7 @@ def webhook():
 
     if not project_name:
         logger.warning(f"未找到匹配的项目: {repository_name}")
+        logger.info(f"已配置的项目: {list(PROJECTS.keys())}")
         return jsonify({
             'status': 'ignored',
             'message': f'未配置项目 {repository_name}'
@@ -282,10 +274,17 @@ def webhook():
 @app.route('/health', methods=['GET'])
 def health():
     """健康检查"""
+    try:
+        import subprocess
+        timestamp = subprocess.run(['date'], capture_output=True, text=True).stdout.strip()
+    except:
+        from datetime import datetime
+        timestamp = datetime.now().isoformat()
+
     return jsonify({
         'status': 'ok',
         'projects': list(PROJECTS.keys()),
-        'timestamp': subprocess.run(['date'], capture_output=True, text=True).stdout.strip()
+        'timestamp': timestamp
     }), 200
 
 
