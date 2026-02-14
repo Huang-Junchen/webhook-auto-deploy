@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 安装 Flask
+RUN pip install flask --no-cache-dir
+
+# 复制 webhook 脚本
+COPY webhook-server.py /app/
+
+EXPOSE 5000
+
+CMD ["python", "webhook-server.py"]
