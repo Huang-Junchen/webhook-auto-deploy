@@ -166,21 +166,21 @@ def deploy_project(project_name: str) -> Tuple[bool, str]:
 
     try:
         # 0. 配置 Git 安全目录（解决所有权问题）
-        success, output = run_command(['git', 'config', '--global', '--add', 'safe.directory', project_path], cwd=project_path)
+        success, output = run_command(['git', 'config', '--global', '--add', 'safe.directory', project_path])
         if not success:
             logger.warning(f"Git 安全目录配置失败: {output}")
 
-        # 1. 拉取最新代码
+        # 1. 拉取最新代码（使用 git -C 参数指定宿主机路径）
         logger.info(f"[1/3] 拉取 {target_branch} 分支最新代码...")
-        success, output = run_command(['git', 'fetch', 'origin'], cwd=project_path)
+        success, output = run_command(['git', '-C', project_path, 'fetch', 'origin'])
         if not success:
             return False, f"Git fetch 失败: {output}"
 
-        success, output = run_command(['git', 'checkout', target_branch], cwd=project_path)
+        success, output = run_command(['git', '-C', project_path, 'checkout', target_branch])
         if not success:
             return False, f"Git checkout 失败: {output}"
 
-        success, output = run_command(['git', 'pull', 'origin', target_branch], cwd=project_path)
+        success, output = run_command(['git', '-C', project_path, 'pull', 'origin', target_branch])
         if not success:
             return False, f"Git pull 失败: {output}"
 
@@ -190,9 +190,9 @@ def deploy_project(project_name: str) -> Tuple[bool, str]:
         if DOCKER_USE_SUDO:
             docker_cmd = ['sudo'] + docker_cmd
 
+        compose_file_path = f'{project_path}/{compose_file}'
         success, output = run_command(
-            docker_cmd + ['-f', compose_file, 'down'],
-            cwd=project_path
+            docker_cmd + ['-f', compose_file_path, 'down']
         )
         if not success:
             logger.warning(f"停止容器失败: {output}")
@@ -200,8 +200,7 @@ def deploy_project(project_name: str) -> Tuple[bool, str]:
         # 3. 启动容器
         logger.info(f"[3/3] 启动 Docker 容器...")
         success, output = run_command(
-            docker_cmd + ['-f', compose_file, 'up', '-d', '--build'],
-            cwd=project_path
+            docker_cmd + ['-f', compose_file_path, 'up', '-d', '--build']
         )
         if not success:
             return False, f"启动容器失败: {output}"
