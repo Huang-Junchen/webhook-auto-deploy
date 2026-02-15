@@ -164,10 +164,6 @@ def deploy_project(project_name: str) -> Tuple[bool, str]:
 
     logger.info(f"开始部署项目: {project_name} ({project.get('description', '')})")
 
-    # 检查项目目录
-    if not os.path.exists(project_path):
-        return False, f"项目路径不存在: {project_path}"
-
     try:
         # 0. 配置 Git 安全目录（解决所有权问题）
         success, output = run_command(['git', 'config', '--global', '--add', 'safe.directory', project_path], cwd=project_path)
