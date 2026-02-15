@@ -9,12 +9,12 @@ services:
     environment:
       - WEBHOOK_SECRET=your-strong-password-here  # 请修改为强密码
       - WEBHOOK_PORT=5000
+      - LOG_LEVEL=INFO
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # 挂载 Docker socket
-      - ./config.py:/app/config.py:ro  # 挂载配置文件
-      # 挂载各个项目的目录（根据实际情况取消注释）
-      # - /volume1/docker/recipe:/volume1/docker/recipe:ro
-      # - /volume1/docker/blog:/volume1/docker/blog:ro
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket
+      - ./config.py:/app/config.py:ro              # 配置文件
+      - /volume1:/volume1                          # 项目目录（读写，Git 需要）
+      - /volume2:/volume2                          # 第二个卷（如果有）
     restart: unless-stopped
     networks:
       - webhook-net
