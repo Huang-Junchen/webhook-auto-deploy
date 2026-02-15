@@ -169,6 +169,11 @@ def deploy_project(project_name: str) -> Tuple[bool, str]:
         return False, f"项目路径不存在: {project_path}"
 
     try:
+        # 0. 配置 Git 安全目录（解决所有权问题）
+        success, output = run_command(['git', 'config', '--global', '--add', 'safe.directory', project_path], cwd=project_path)
+        if not success:
+            logger.warning(f"Git 安全目录配置失败: {output}")
+
         # 1. 拉取最新代码
         logger.info(f"[1/3] 拉取 {target_branch} 分支最新代码...")
         success, output = run_command(['git', 'fetch', 'origin'], cwd=project_path)
