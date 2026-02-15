@@ -13,8 +13,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Docker socket
       - ./config.py:/app/config.py:ro              # 配置文件
-      - /volume1:/volume1                          # 项目目录（读写，Git 需要）
-      - /volume2:/volume2                          # 第二个卷（如果有）
+      - /volume1/docker:/volume1/docker            # 只挂载 docker 文件夹（读写）
+      - /volume2/docker:/volume2/docker            # 如果有第二个卷的 docker 文件夹
     restart: unless-stopped
     networks:
       - webhook-net
