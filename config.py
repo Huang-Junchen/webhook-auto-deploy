@@ -7,9 +7,11 @@
 #
 # 或者直接修改此文件用于生产环境
 
+from typing import Dict, Any
+
 # 项目配置列表
 # 格式：'项目名': {'path': '项目路径', 'compose_file': 'compose文件', 'branch': '分支', 'description': '描述'}
-PROJECTS = {
+PROJECTS: Dict[str, Dict[str, Any]] = {
     'recipe': {
         'path': '/volume1/docker/recipe',       # 项目在 NAS 上的实际路径
         'compose_file': 'docker-compose.yml',     # Docker Compose 文件名
@@ -26,8 +28,8 @@ PROJECTS = {
 }
 
 # Docker 配置
-DOCKER_USE_SUDO = False  # Docker 命令是否需要 sudo
+DOCKER_USE_SUDO: bool = False  # Docker 命令是否需要 sudo
 
 # 日志级别
 # 可选值：DEBUG, INFO, WARNING, ERROR, CRITICAL
-LOG_LEVEL = 'INFO'
+LOG_LEVEL: str = 'INFO'

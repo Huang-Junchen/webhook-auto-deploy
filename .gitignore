@@ -8,6 +8,11 @@ env/
 venv/
 ENV/
 .venv
+.env*.local
+
+# uv - Python package manager
+.uv/
+uv.lock
 
 # IDE
 .vscode/
