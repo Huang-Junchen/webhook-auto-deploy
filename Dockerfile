@@ -10,6 +10,11 @@ RUN apt-get update && \
     docker-compose \
     && rm -rf /var/lib/apt/lists/*
 
+# 添加 GitHub 到 SSH known_hosts
+RUN mkdir -p /root/.ssh && \
+    ssh-keyscan github.com > /root/.ssh/known_hosts && \
+    chmod 600 /root/.ssh/known_hosts
+
 # 先复制依赖文件
 COPY requirements.txt /app/
 
